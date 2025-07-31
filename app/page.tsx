@@ -1,14 +1,51 @@
+"use client"
+
 import AuthButton from "@/components/auth-button";
 import PostCards from "@/components/PostCards";
 import { Button } from "@/components/ui/button";
-import { dummyPosts } from "@/dummy-post";
 import { PlusCircle } from "lucide-react";
-import Link from "next/link"; // ✅ Correct Link import for Next.js
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+interface Post {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  author: {
+    name: string | null;
+    image: string | null;
+  }
+  _count: {
+    likes: number;
+    comments: number;
+  };
+}
 
 export default function Home() {
-  const isAdmin = true; // Replace with actual admin check logic
-  const posts = dummyPosts
-  const loading = false
+
+  const { data: session } = useSession();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/posts");
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <div className="min-h-screen bg-background">
@@ -31,6 +68,7 @@ export default function Home() {
           </div>
         </div>
       </header>
+      
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-8">
